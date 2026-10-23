@@ -66,6 +66,10 @@ hotskip tune <имя> skip=0.4 ctx=32768             # настройки мод
 * Пока только NVIDIA/CUDA и только Linux.
 * Агенты работают, но на самых больших моделях медленно: там упор в скорость генерации.
 
+## Поддержать автора
+
+Если HOTskip пригодился, можно поддержать автора: [банка Monobank](https://send.monobank.ua/jar/ABkwFDAY2V).
+
 ## Благодарности
 
 Основано на [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT). Разработано вместе с Claude

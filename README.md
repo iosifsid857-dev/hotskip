@@ -145,6 +145,10 @@ kills the server, not your desktop.
 * CPU `mul_mat_id`: id `-1` means "skip, output zero".
 * CUDA `mul_mat_id` / `add_id`: the same `-1` handling, so long prompts can run on the GPU.
 
+## Support
+
+If HOTskip helped you, you can support the author (Ukraine 🇺🇦): [Monobank jar](https://send.monobank.ua/jar/ABkwFDAY2V).
+
 ## Credits
 
 Built on [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT). Developed together with Claude (Anthropic)
