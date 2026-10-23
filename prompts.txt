@@ -1,0 +1,18 @@
+Напиши код для ESP32 на Arduino: датчик HC-SR04 на пинах 26 и 27, при расстоянии меньше 50 см включать реле на пине 23.
+Explain how to fix a black screen after installing NVIDIA drivers on Fedora Linux with Secure Boot enabled.
+Привет! Посоветуй, что посмотреть вечером, если мне нравятся фантастика и аниме.
+Write a Python script that resizes all PNG images in a folder to 1920x1200 and saves them as WebP.
+Объясни простыми словами, как работает нейросеть-трансформер и что такое attention.
+What are the best tank lines for a beginner in War Thunder and why?
+Как подключить OLED дисплей SSD1306 к ESP32 по I2C и вывести на него текст? Дай пример кода.
+Translate to English and make it sound natural: "Я собрал водяную турель на ESP32, которая пугает собак."
+Привет! Как дела? Расскажи что-нибудь интересное про космос, просто поболтаем.
+Напиши короткий смешной рассказ про кота, который научился программировать.
+Помоги придумать подарок другу на день рождения, он любит игры и электронику. Дай идеи с объяснением.
+Объясни простыми словами, почему небо голубое, а закат красный.
+Какие книги и фильмы посоветуешь в жанре научной фантастики? Кратко опиши каждый.
+Мне грустно и не хочется ничего делать. Что можно сделать, чтобы немного взбодриться?
+Write a short poem about the ocean at night, then explain the imagery you used.
+What are the main causes of World War I? Give a balanced overview for a student.
+Как приготовить вкусный борщ? Дай рецепт по шагам.
+Сравни Dota 2 и Counter-Strike 2: чем они отличаются и что интереснее новичку?

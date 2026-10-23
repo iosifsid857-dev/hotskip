@@ -1,0 +1,12 @@
+8 traces, VRAM 1880 experts, 80 RAM slots/layer; miss rate of cold accesses on the held-out prompt:
+  lfu d=0.9 prior=1         15.3%
+  lfu d=0.9 prior=5         15.3%
+  arc-ish                   15.3%
+  pinned0+lru               15.4%
+  pinned20+lru              15.4%
+  lfu d=0.97 prior=1        15.5%
+  lfu d=0.97 prior=5        15.5%
+  lfu d=0.99 prior=1        15.8%
+  lfu d=0.99 prior=5        15.9%
+  pinned40+lru              15.9%
+  pinned60+lru              16.6%

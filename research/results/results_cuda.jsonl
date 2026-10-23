@@ -1,0 +1,6 @@
+{"name": "c_HOTskip_r1", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload", "load_s": 2.0, "prompt_tok_s": 132.5, "gen_tok_s": 40.8, "gen_tokens": 256, "vram_mb": 5466}
+{"name": "c_HOTskip_r2", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload", "load_s": 2.0, "prompt_tok_s": 137.1, "gen_tok_s": 40.39, "gen_tokens": 256, "vram_mb": 5456}
+{"name": "c_cpumoe_r2", "args": "-ngl 99 --cpu-moe -t 8 --no-op-offload", "load_s": 9.0, "prompt_tok_s": 61.5, "gen_tok_s": 35.02, "gen_tokens": 256, "vram_mb": 1958}
+{"name": "c_cpumoe_off", "args": "-ngl 99 --cpu-moe -t 8", "load_s": 2.0, "prompt_tok_s": 52.0, "gen_tok_s": 34.62, "gen_tokens": 256, "vram_mb": 2332}
+{"name": "c_ncmoe33_r2", "args": "-ngl 99 --n-cpu-moe 33 -t 8 --no-op-offload", "load_s": 2.0, "prompt_tok_s": 104.5, "gen_tok_s": 38.87, "gen_tokens": 256, "vram_mb": 5397}
+{"name": "c_ncmoe33_off", "error": "server exited", "log": "/tmp/llmlab-c_ncmoe33_off.log"}

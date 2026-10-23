@@ -1,0 +1,84 @@
+{"name": "m1_cpumoe", "args": "-ngl 99 --cpu-moe -t 8", "load_s": 12.0, "prompt_tok_s": 18.2, "gen_tok_s": 25.16, "gen_tokens": 256, "vram_mb": 2239}
+{"name": "m1_ncmoe33", "args": "-ngl 99 --n-cpu-moe 33 -t 8", "load_s": 3.0, "prompt_tok_s": 31.0, "gen_tok_s": 28.09, "gen_tokens": 256, "vram_mb": 5599}
+Traceback (most recent call last):
+  File "~/Projects/llm-lab/run_bench.py", line 74, in <module>
+    main()
+    ~~~~^^
+  File "~/Projects/llm-lab/run_bench.py", line 56, in main
+    res = post("/completion", {"prompt": PROMPT, "n_predict": 256, "temperature": 0, "cache_prompt": False})
+  File "~/Projects/llm-lab/run_bench.py", line 28, in post
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 487, in open
+    response = self._open(req, data)
+  File "/usr/lib64/python3.14/urllib/request.py", line 504, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "/usr/lib64/python3.14/urllib/request.py", line 464, in _call_chain
+    result = func(*args)
+  File "/usr/lib64/python3.14/urllib/request.py", line 1362, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 1337, in do_open
+    r = h.getresponse()
+  File "/usr/lib64/python3.14/http/client.py", line 1478, in getresponse
+    response.begin()
+    ~~~~~~~~~~~~~~^^
+  File "/usr/lib64/python3.14/http/client.py", line 343, in begin
+    version, status, reason = self._read_status()
+                              ~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib64/python3.14/http/client.py", line 312, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+                             " response")
+http.client.RemoteDisconnected: Remote end closed connection without response
+{"name": "m2_cpumoe", "args": "-ngl 99 --cpu-moe -t 8", "load_s": 12.0, "prompt_tok_s": 19.5, "gen_tok_s": 25.41, "gen_tokens": 256, "vram_mb": 2220}
+{"name": "m2_ncmoe33", "args": "-ngl 99 --n-cpu-moe 33 -t 8", "load_s": 3.0, "prompt_tok_s": 31.6, "gen_tok_s": 28.77, "gen_tokens": 256, "vram_mb": 5597}
+Traceback (most recent call last):
+  File "~/Projects/llm-lab/run_bench.py", line 74, in <module>
+    main()
+    ~~~~^^
+  File "~/Projects/llm-lab/run_bench.py", line 56, in main
+    res = post("/completion", {"prompt": PROMPT, "n_predict": 256, "temperature": 0, "cache_prompt": False})
+  File "~/Projects/llm-lab/run_bench.py", line 28, in post
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 487, in open
+    response = self._open(req, data)
+  File "/usr/lib64/python3.14/urllib/request.py", line 504, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "/usr/lib64/python3.14/urllib/request.py", line 464, in _call_chain
+    result = func(*args)
+  File "/usr/lib64/python3.14/urllib/request.py", line 1362, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 1337, in do_open
+    r = h.getresponse()
+  File "/usr/lib64/python3.14/http/client.py", line 1478, in getresponse
+    response.begin()
+    ~~~~~~~~~~~~~~^^
+  File "/usr/lib64/python3.14/http/client.py", line 343, in begin
+    version, status, reason = self._read_status()
+                              ~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib64/python3.14/http/client.py", line 312, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+                             " response")
+http.client.RemoteDisconnected: Remote end closed connection without response
+{"name": "m1_HOTskip", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload", "load_s": 4.0, "prompt_tok_s": 126.4, "gen_tok_s": 30.76, "gen_tokens": 256, "vram_mb": 5336}
+{"name": "m2_HOTskip", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload", "load_s": 3.0, "prompt_tok_s": 142.0, "gen_tok_s": 30.78, "gen_tokens": 256, "vram_mb": 5313}
+{"name": "n1_cpumoe_nooff", "args": "-ngl 99 --cpu-moe -t 8 --no-op-offload", "load_s": 10.0, "prompt_tok_s": 69.4, "gen_tok_s": 25.36, "gen_tokens": 256, "vram_mb": 1817}
+{"name": "n1_ncmoe33_nooff", "args": "-ngl 99 --n-cpu-moe 33 -t 8 --no-op-offload", "load_s": 3.0, "prompt_tok_s": 109.3, "gen_tok_s": 28.37, "gen_tokens": 256, "vram_mb": 5218}
+{"name": "hot4.1_t8", "error": "server exited", "log": "/tmp/llmlab-hot4.1_t8.log"}
+{"name": "hot3.4_t6", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU --no-op-offload -t 6", "load_s": 11.0, "prompt_tok_s": 15.0, "gen_tok_s": 21.8, "gen_tokens": 256, "vram_mb": 5392}
+{"name": "hot3.4_t10", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU --no-op-offload -t 10", "load_s": 3.0, "prompt_tok_s": 133.9, "gen_tok_s": 30.01, "gen_tokens": 256, "vram_mb": 5293}
+{"name": "hot3.4_t12", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU --no-op-offload -t 12", "load_s": 2.0, "prompt_tok_s": 138.4, "gen_tok_s": 29.92, "gen_tokens": 256, "vram_mb": 5332}
+{"name": "hot3.75_r1", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU --no-op-offload -t 8", "load_s": 10.1, "prompt_tok_s": 15.9, "gen_tok_s": 21.09, "gen_tokens": 256, "vram_mb": 5685}
+{"name": "hot3.75_r2", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU --no-op-offload -t 8", "load_s": 3.0, "prompt_tok_s": 142.5, "gen_tok_s": 29.68, "gen_tokens": 256, "vram_mb": 5659}
+{"name": "DIAG_nocold_r1", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU --no-op-offload -t 8", "load_s": 3.0, "prompt_tok_s": 238.4, "gen_tok_s": 37.61, "gen_tokens": 256, "vram_mb": 5689}
+{"name": "DIAG_nocold_r2", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU --no-op-offload -t 8", "load_s": 2.0, "prompt_tok_s": 234.6, "gen_tok_s": 37.82, "gen_tokens": 256, "vram_mb": 5692}

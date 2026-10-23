@@ -1,0 +1,24 @@
+traces: 8  activations: 448776
+layers: 40  experts/layer: 256  experts used per token per layer: 8
+VRAM budget = 7 full layers = 1792 experts (17.5% of all)
+
+skew (all prompts): top share of experts -> share of all work
+  top  5.0% experts ->  28.4% of activations
+  top 10.0% experts ->  43.6% of activations
+  top 17.5% experts ->  59.5% of activations
+  top 25.0% experts ->  70.9% of activations
+  top 50.0% experts ->  92.2% of activations
+  experts never used at all: 1063 of 10240 (10.4%)
+
+held-out prompt | GPU share: whole layers (llama.cpp) | GPU share: hot experts (ours)
+  prompt 1       |  17.6%                           |  56.9%
+  prompt 2       |  17.6%                           |  52.9%
+  prompt 3       |  17.6%                           |  47.2%
+  prompt 4       |  17.6%                           |  45.2%
+  prompt 5       |  17.6%                           |  50.1%
+  prompt 6       |  17.6%                           |  46.8%
+  prompt 7       |  17.6%                           |  61.7%
+  prompt 8       |  17.8%                           |  48.6%
+  AVERAGE        |  17.6%                           |  51.2%
+  predicted speed with whole layers:  34.7 tok/s
+  predicted speed with hot experts :  59.7 tok/s

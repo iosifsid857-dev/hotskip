@@ -1,0 +1,5 @@
+llama.cpp/
+__pycache__/
+*.gguf
+*.kld
+*.log

@@ -1,0 +1,2 @@
+{"name": "r1_cpumoe", "args": "-ngl 99 --cpu-moe -t 8 --load-mode none", "load_s": 10.0, "prompt_tok_s": 20.7, "gen_tok_s": 26.4, "gen_tokens": 256, "vram_mb": 2197}
+{"name": "r1_ncmoe33", "args": "-ngl 99 --n-cpu-moe 33 -t 8 --load-mode none", "load_s": 10.0, "prompt_tok_s": 27.9, "gen_tok_s": 29.44, "gen_tokens": 256, "vram_mb": 5671}

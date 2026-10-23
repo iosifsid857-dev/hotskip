@@ -1,0 +1,18 @@
+gpt-oss skip 0: out of memory
+gpt-oss skip 0.4: out of memory
+gpt-oss skip 0.64: out of memory
+gpt-oss skip 0: out of memory
+gpt-oss skip 0.4: out of memory
+gpt-oss skip 0.64: out of memory
+gpt-oss skip 0: Final estimate: PPL = 2360.4487
+gpt-oss skip 0.4: Final estimate: PPL = 2295.2749
+gpt-oss skip 0.64: Final estimate: PPL = 2712.2925
+== gpt-oss skip 0
+Mean    KLD:   0.087727 ±   0.016025
+Same top p: 87.795 ± 2.058 %
+== gpt-oss skip 0.4
+Mean    KLD:   0.172622 ±   0.031043
+Same top p: 80.709 ± 2.481 %
+== gpt-oss skip 0.64
+Mean    KLD:   0.228158 ±   0.039948
+Same top p: 82.677 ± 2.379 %

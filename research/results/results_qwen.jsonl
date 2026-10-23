@@ -1,0 +1,7 @@
+{"name": "cpu_only", "args": "-ngl 0 -t 6", "load_s": 13.0, "prompt_tok_s": 6.7, "gen_tok_s": 9.54, "gen_tokens": 256, "vram_mb": 591}
+{"name": "gpu_attn_cpu_experts", "args": "-ngl 99 --cpu-moe -t 6", "load_s": 2.0, "prompt_tok_s": 46.2, "gen_tok_s": 28.46, "gen_tokens": 256, "vram_mb": 2322}
+{"name": "ncmoe_36", "args": "-ngl 99 --n-cpu-moe 36 -t 6", "load_s": 2.0, "prompt_tok_s": 52.3, "gen_tok_s": 30.36, "gen_tokens": 256, "vram_mb": 4355}
+{"name": "ncmoe_33", "args": "-ngl 99 --n-cpu-moe 33 -t 6", "load_s": 2.0, "prompt_tok_s": 55.2, "gen_tok_s": 34.65, "gen_tokens": 256, "vram_mb": 5741}
+{"name": "ncmoe_30", "error": "server exited", "log": "/tmp/llmlab-ncmoe_30.log"}
+{"name": "moecache_2000", "args": "-ngl 99 --cpu-moe --moe-cache-mib 2000 -t 6", "load_s": 7.0, "prompt_tok_s": 38.9, "gen_tok_s": 19.1, "gen_tokens": 256, "vram_mb": 4376}
+{"name": "moecache_3300", "args": "-ngl 99 --cpu-moe --moe-cache-mib 3300 -t 6", "load_s": 15.0, "prompt_tok_s": 45.2, "gen_tok_s": 31.73, "gen_tokens": 256, "vram_mb": 5670}

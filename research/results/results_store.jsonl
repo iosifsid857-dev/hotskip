@@ -1,0 +1,31 @@
+{"name": "s_store48_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 7.4, "prompt_tok_s": 13.2, "gen_tok_s": 9.71, "gen_tokens": 256, "vram_mb": 5183, "memmax": "7G", "ssd_mb_per_tok": 83.2}
+{"name": "s_store48p_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 6.3, "prompt_tok_s": 22.7, "gen_tok_s": 13.12, "gen_tokens": 256, "vram_mb": 5395, "memmax": "7G", "ssd_mb_per_tok": 83.4}
+{"name": "s_store64_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 7.4, "prompt_tok_s": 25.6, "gen_tok_s": 14.69, "gen_tokens": 256, "vram_mb": 5443, "memmax": "7G", "ssd_mb_per_tok": 65.5}
+  stats: {"calls": 10991, "hot": 47304, "hit": 39004, "miss": 10980, "read_mb": 23920.0, "io_s": 0.000}
+{"name": "s_store80_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.4, "prompt_tok_s": 28.2, "gen_tok_s": 16.38, "gen_tokens": 256, "vram_mb": 5378, "memmax": "7G", "ssd_mb_per_tok": 50.9}
+  stats: {"calls": 10991, "hot": 47377, "hit": 41359, "miss": 8552, "read_mb": 20432.0, "io_s": 0.000}
+{"name": "s_store80_pred8_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.2, "prompt_tok_s": 29.1, "gen_tok_s": 16.41, "gen_tokens": 256, "vram_mb": 5432, "memmax": "7
+{"calls": 10991, "hot": 47275, "hit": 41419, "miss": 8594, "read_mb": 20514.1, "miss_predicted": 4990, "pred_load": 8977, "pred_used": 5024}
+{"name": "s_store80_pred16_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.2, "prompt_tok_s": 29.3, "gen_tok_s": 16.52, "gen_tokens": 256, "vram_mb": 5402, "memmax": "
+{"calls": 10991, "hot": 47368, "hit": 41327, "miss": 8593, "read_mb": 20510.2, "miss_predicted": 6753, "pred_load": 33186, "pred_used": 6775}
+{"name": "s80_pk8_io4_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.2, "prompt_tok_s": 34.0, "gen_tok_s": 17.77, "gen_tokens": 256, "vr
+{"calls": 10991, "hot": 47324, "hit": 46022, "miss": 3942, "read_mb": 26724.7, "miss_predicted": 319, "pred_load": 8268, "pred_used": 4931, "prefetched": 7824}
+common prefix 434
+{"name": "s80_pk8_io8_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.1, "prompt_tok_s": 32.9, "gen_tok_s": 17.42, "gen_tokens": 256, "vr
+{"calls": 10991, "hot": 47292, "hit": 46060, "miss": 3936, "read_mb": 26797.1, "miss_predicted": 316, "pred_load": 8313, "pred_used": 4978, "prefetched": 7869}
+common prefix 434
+{"name": "s80_pk12_io8_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.2, "prompt_tok_s": 27.8, "gen_tok_s": 15.25, "gen_tokens": 256, "v
+{"calls": 10991, "hot": 47018, "hit": 47321, "miss": 2949, "read_mb": 40596.6, "miss_predicted": 491, "pred_load": 16676, "pred_used": 6203, "prefetched": 16007}
+common prefix 434
+{"name": "s80_a2_pk8_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.2, "prompt_tok_s": 33.3, "gen_tok_s": 17.89, "gen_tokens": 256, "vra
+{"calls": 10991, "hot": 47281, "hit": 44712, "miss": 5295, "read_mb": 28594.5, "miss_predicted": 290, "pred_load": 7865, "pred_used": 3647, "prefetched": 7437}
+{"name": "s80_a2_pk12_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.2, "prompt_tok_s": 27.9, "gen_tok_s": 16.14, "gen_tokens": 256, "vr
+{"calls": 10991, "hot": 47273, "hit": 45501, "miss": 4514, "read_mb": 42205.8, "miss_predicted": 432, "pred_load": 15923, "pred_used": 4792, "prefetched": 15279}
+{"name": "s80_a3_pk12_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 8.2, "prompt_tok_s": 28.5, "gen_tok_s": 16.42, "gen_tokens": 256, "vr
+{"calls": 10991, "hot": 47384, "hit": 44469, "miss": 5435, "read_mb": 41822.2, "miss_predicted": 394, "pred_load": 14813, "pred_used": 4033, "prefetched": 14209}
+{"name": "o80_pf0_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 7.3, "prompt_tok_s": 29.4, "gen_tok_s": 17.07, "gen_tokens": 256, "vram_m
+{"calls": 10991, "hot": 47344, "hit": 41369, "miss": 8575, "read_mb": 20475.9, "miss_predicted": 0, "pred_load": 0, "pred_used": 0, "prefetched": 0}
+common prefix 434
+{"name": "o80_pf4_7G", "args": "-ngl 99 -ot cexps=CPU -ot moe_.map=CPU -t 8 --no-op-offload --load-mode none -ub 4", "load_s": 7.2, "prompt_tok_s": 33.6, "gen_tok_s": 17.78, "gen_tokens": 256, "vram_m
+{"calls": 10991, "hot": 47356, "hit": 46011, "miss": 3921, "read_mb": 26696.7, "miss_predicted": 317, "pred_load": 8275, "pred_used": 4957, "prefetched": 7831}
+common prefix 434

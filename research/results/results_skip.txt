@@ -1,0 +1,12 @@
+== skip < 0
+  PPL(ub7): Final estimate: PPL = 6.1406
+"gen_tok_s": 15.51 "ssd_mb_per_tok": 73.7 "miss": 4270 "skipped": 0 
+== skip < 0.05
+  PPL(ub7): Final estimate: PPL = 6.0909
+"gen_tok_s": 17.3 "ssd_mb_per_tok": 60.4 "miss": 3280 "skipped": 515 
+== skip < 0.08
+  PPL(ub7): Final estimate: PPL = 6.1039
+"gen_tok_s": 18.49 "ssd_mb_per_tok": 60.9 "miss": 2383 "skipped": 1782 
+== skip < 0.12
+  PPL(ub7): Final estimate: PPL = 6.2032
+"gen_tok_s": 20.39 "ssd_mb_per_tok": 53.0 "miss": 951 "skipped": 3787 
