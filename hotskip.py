@@ -158,8 +158,7 @@ def server_cmd(name, port, ctx, io_threads, think, ngl=None):
     cap = max(need, mem_available() - 2 * GIB)
     # big micro-batches: the store serves cold experts in groups that fit RAM (each read once per batch)
     cmd = scope(cap) + [f"{BIN}/llama-server", "-m", f"{d}/skeleton.gguf", "--host", "127.0.0.1",
-                        "--port", str(port), "-c", str(ctx or cfg.get("ctx", 16384)), "-ngl", str(ngl if ngl is not None else cfg.get("ngl", 99)), "-ot", "cexps=CPU",
-                        "-ot", "moe_.map=CPU", "-t", "8", "--load-mode", "none",
+                        "--port", str(port), "-c", str(ctx or cfg.get("ctx", 16384)), "-ngl", str(ngl if ngl is not None else cfg.get("ngl", 99)), "-ot", "cexps=CPU,moe_.map=CPU", "-t", "8", "--load-mode", "none",
                         "-ub", str(cfg.get("ub", 512)), "-b", "2048", "--jinja", "--reasoning", "on" if think else "off"]
     return cmd, env
 
