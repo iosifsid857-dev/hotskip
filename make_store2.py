@@ -9,10 +9,12 @@ and an index for llama.cpp (EXPSTORE_INDEX) pointing at the original ffn_*_exps 
 Hot experts: globally most used in the routing traces, up to budget_gib.
 
 Usage: make_store2.py model.gguf skeleton.gguf index.txt budget_gib slots "traces/<model>_*.txt"
+A split model (model-00001-of-00005.gguf) is read from all its shards; the index then lists every shard.
 """
 import collections
 import glob
 import os
+import re
 import sys
 
 import numpy as np
@@ -52,15 +54,33 @@ def write_hole(writer, nbytes):
     writer.write_padding(fout, nbytes)
 
 
+def shards_of(src):
+    """model-00001-of-00005.gguf -> all five shard paths in order; a one-file model -> [src]."""
+    m = re.match(r"(.*)-(\d{5})-of-(\d{5})\.gguf$", src)
+    if not m:
+        return [src]
+    paths = [f"{m.group(1)}-{i:05d}-of-{m.group(3)}.gguf" for i in range(1, int(m.group(3)) + 1)]
+    missing = [p for p in paths if not os.path.exists(p)]
+    if missing:
+        sys.exit(f"missing shards: {missing}")
+    return paths
+
+
 def main():
     src, dst, index = sys.argv[1], sys.argv[2], sys.argv[3]
     budget, slots, pattern = float(sys.argv[4]) * 1024 ** 3, int(sys.argv[5]), sys.argv[6]
-    reader = gguf.GGUFReader(src)
+    paths = shards_of(os.path.abspath(src))
+    readers = [gguf.GGUFReader(p) for p in paths]
+    reader = readers[0]  # metadata lives in the first shard
     arch = bytes(reader.fields["general.architecture"].parts[-1]).decode()
     n_layer = int(reader.fields[f"{arch}.block_count"].parts[-1][0])
     n_expert = int(reader.fields[f"{arch}.expert_count"].parts[-1][0])
     n_used = int(reader.fields[f"{arch}.expert_used_count"].parts[-1][0])
-    tensors = {t.name: t for t in reader.tensors}
+    tensors, file_of, all_tensors = {}, {}, []
+    for fi, r in enumerate(readers):
+        for t in r.tensors:
+            tensors[t.name], file_of[t.name] = t, fi
+            all_tensors.append((t, r))
     moe_layers = [il for il in range(n_layer) if f"blk.{il}.ffn_down_exps.weight" in tensors
                   and f"blk.{il}.nextn.eh_proj.weight" not in tensors]  # MTP layers stay whole
     expert_bytes = {il: sum(tensors[f"blk.{il}.ffn_{k}_exps.weight"].n_bytes for k in KINDS) // n_expert
@@ -73,10 +93,13 @@ def main():
     used = 0
     # every layer gets at least n_used real hot experts: big batches fill a token's cold positions with
     # distinct hot slots it does not use (CUDA batched mul_mat_id must not see an expert twice per token)
+    # MIN_HOT < n_used saves VRAM on huge models (Kimi: 60 layers x 11.5 MB) but then the server has to run with
+    # -ub <= 8 (the big-batch path needs n_used distinct hot slots per layer)
+    min_hot = int(os.environ.get("MIN_HOT", n_used))
     for il in moe_layers:
-        top = sorted(range(n_expert), key=lambda e: -counts[(il, e)])[:n_used]
+        top = sorted(range(n_expert), key=lambda e: -counts[(il, e)])[:min_hot]
         hot[il] = top
-        used += expert_bytes[il] * (n_used + 1)
+        used += expert_bytes[il] * (min_hot + 1)
     for (il, e), _ in counts.most_common():
         if il not in expert_bytes or e in hot[il]:
             continue
@@ -89,20 +112,27 @@ def main():
           f"{sum(expert_bytes.values()) * slots / 1024 ** 3:.2f} GiB")
 
     with open(index, "w") as f:
-        f.write(f"expstore 1 {os.path.abspath(src)} {n_layer} {n_expert} {slots}\n")
+        split = len(paths) > 1
+        if split:
+            f.write(f"expstore 2 {len(paths)} {n_layer} {n_expert} {slots}\n")
+            f.writelines(f"file {p}\n" for p in paths)
+        else:
+            f.write(f"expstore 1 {paths[0]} {n_layer} {n_expert} {slots}\n")
         for il in moe_layers:
             h = set(hot[il])
             parts = [tensors[n] for n in (f"blk.{il}.ffn_{k}_exps.{w}" for k, w in PARTS) if n in tensors]
             cold = [e for e in range(n_expert) if e not in h]
             f.write(f"layer {il} {len(parts)}\n")
             for t in parts:
-                f.write(f"part {t.name} {t.data_offset} {t.n_bytes // n_expert}\n")
+                f.write(f"part {t.name} {t.data_offset} {t.n_bytes // n_expert}"
+                        + (f" {file_of[t.name]}\n" if split else "\n"))
             f.write("cmap " + " ".join(str(-1 if e in h else e) for e in range(n_expert)) + "\n")
             f.write("rank " + " ".join(map(str, sorted(cold, key=lambda e: -counts[(il, e)]))) + "\n")
 
     writer = gguf.GGUFWriter(dst, arch=arch)
     for field in reader.fields.values():
-        if field.name == gguf.Keys.General.ARCHITECTURE or field.name.startswith("GGUF."):
+        # the skeleton is one file: drop the shard bookkeeping keys
+        if field.name == gguf.Keys.General.ARCHITECTURE or field.name.startswith(("GGUF.", "split.")):
             continue
         vt = field.types[0]
         writer.add_key_value(field.name, field.contents(), vt,
@@ -117,9 +147,9 @@ def main():
         jobs.append(job)
 
     split_names = {f"blk.{il}.ffn_{k}_exps.{w}" for il in moe_layers for k, w in PARTS}
-    for t in reader.tensors:
+    for t, r in all_tensors:
         if t.name not in split_names:
-            add(t.name, t.data.shape, t.data.dtype, t.tensor_type, ("copy", t))
+            add(t.name, t.data.shape, t.data.dtype, t.tensor_type, ("copy", t, r))
             continue
         il, kind, suffix = int(t.name.split(".")[1]), t.name.split(".")[2].split("_")[1], t.name.split(".")[3]
         h = sorted(hot[il])
@@ -140,7 +170,7 @@ def main():
     writer.write_ti_data_to_file()
     for job in jobs:
         if job[0] == "copy":
-            writer.write_tensor_data(job[1].data, tensor_endianess=reader.endianess)
+            writer.write_tensor_data(job[1].data, tensor_endianess=job[2].endianess)
         elif job[0] == "hot":
             data, ids = job[1].data, job[2]
             out = np.zeros((len(ids) + 1,) + data.shape[1:], dtype=data.dtype)  # last = zero expert

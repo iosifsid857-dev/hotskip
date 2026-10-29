@@ -294,10 +294,31 @@ index 5a8ca42..b991e1e 100644
      LLM_TENSOR_FFN_GATE_SHEXP,
      LLM_TENSOR_FFN_UP_SHEXP,
 diff --git a/src/llama-context.cpp b/src/llama-context.cpp
-index 9ee64b5..c614803 100644
+index 9ee64b5..18a4dca 100644
 --- a/src/llama-context.cpp
 +++ b/src/llama-context.cpp
-@@ -2795,7 +2795,10 @@ bool llama_context::sched_copy_experts(ggml_backend_t backend, const ggml_tensor
+@@ -10,6 +10,7 @@
+ #include "llama-mmap.h"
+ #include "llama-model.h"
+ #include "llama-moe-cache.h"
++#include "llama-expstore.h"
+ #include "llama-ext.h"
+ #include "llama-sampler.h"
+ #include "llama.h"
+@@ -2546,6 +2547,12 @@ uint32_t llama_context::graph_max_nodes(uint32_t n_tokens) const {
+         res *= 4;
+     }
+ 
++    // HOTskip grouped prefill: a batch's cold experts are served in up to 255 groups per MoE layer, each
++    // a few extra nodes; Kimi (384 experts, few RAM slots) needs ~26 groups x 60 layers
++    if (llama_expstore_enabled()) {
++        res = std::max<uint32_t>(res, 64u * model.n_tensors());
++    }
++
+     return res;
+ }
+ 
+@@ -2795,7 +2802,10 @@ bool llama_context::sched_copy_experts(ggml_backend_t backend, const ggml_tensor
          for (int64_t i1 = 0; i1 < ids->ne[1]; i1++) {
              for (int64_t i0 = 0; i0 < ids->ne[0]; i0++) {
                  const int32_t id = st.ids_data[i1*ids->nb[1]/sizeof(int32_t) + i0*ids->nb[0]/sizeof(int32_t)];
@@ -311,10 +332,10 @@ index 9ee64b5..c614803 100644
          }
 diff --git a/src/llama-expstore.cpp b/src/llama-expstore.cpp
 new file mode 100644
-index 0000000..1045159
+index 0000000..e55a7ae
 --- /dev/null
 +++ b/src/llama-expstore.cpp
-@@ -0,0 +1,610 @@
+@@ -0,0 +1,638 @@
 +#include "llama-expstore.h"
 +
 +#include "ggml.h"
@@ -346,6 +367,7 @@ index 0000000..1045159
 +    std::string name;
 +    uint64_t    off;   // file offset of cold-stack index 0
 +    uint64_t    bytes; // bytes per expert
++    int         file = 0; // which shard of a split GGUF holds the tensor (index version 2)
 +};
 +
 +struct layer_store {
@@ -367,7 +389,7 @@ index 0000000..1045159
 +};
 +
 +struct expstore {
-+    int fd = -1;
++    std::vector<int> fds; // one per GGUF shard (a single entry for a one-file model)
 +    int n_layer = 0, n_expert = 0, slots = 0, pinned = 0;
 +    std::deque<layer_store> layers; // deque: layer_store holds atomics and is not movable
 +    uint64_t tick = 0, call = 0;
@@ -408,10 +430,28 @@ index 0000000..1045159
 +    auto * s = new expstore();
 +    std::string line, tag, src;
 +    int version = 0;
++    std::vector<std::string> files;
 +    std::getline(in, line);
++    // v1: "expstore 1 <model.gguf> n_layer n_expert slots"
++    // v2: "expstore 2 <n_files> n_layer n_expert slots", then one "file <shard.gguf>" line per shard
 +    std::istringstream(line) >> tag >> version >> src >> s->n_layer >> s->n_expert >> s->slots;
-+    if (tag != "expstore" || version != 1) {
++    if (tag != "expstore" || (version != 1 && version != 2)) {
 +        throw std::runtime_error("expstore: bad index header");
++    }
++    if (version == 1) {
++        files.push_back(src);
++    } else {
++        const int n_files = std::stoi(src);
++        for (int i = 0; i < n_files && std::getline(in, line); i++) {
++            std::istringstream ls(line);
++            std::string path;
++            ls >> tag >> path;
++            if (tag != "file") {
++                throw std::runtime_error("expstore: expected 'file' line in index");
++            }
++            files.push_back(path);
++        }
++        src = files.empty() ? "" : files[0];
 +    }
 +    for (int i = 0; i < s->n_layer; i++) {
 +        s->layers.emplace_back();
@@ -427,6 +467,12 @@ index 0000000..1045159
 +        } else if (tag == "part") {
 +            part_info p;
 +            ls >> p.name >> p.off >> p.bytes;
++            if (version == 2) {
++                ls >> p.file;
++            }
++            if (p.file < 0 || p.file >= (int) files.size()) {
++                throw std::runtime_error("expstore: bad file id for " + p.name);
++            }
 +            cur->parts.push_back(p);
 +            s->buf_size = std::max<size_t>(s->buf_size, p.bytes + 2 * ALIGN);
 +        } else if (tag == "cmap" || tag == "rank") {
@@ -441,9 +487,12 @@ index 0000000..1045159
 +    if (const char * sp = getenv("EXPSTORE_STATS")) {
 +        s->stats_path = sp;
 +    }
-+    s->fd = open(src.c_str(), O_RDONLY | O_DIRECT);
-+    if (s->fd < 0) {
-+        throw std::runtime_error("expstore: cannot open " + src);
++    for (const auto & f : files) {
++        const int fd = open(f.c_str(), O_RDONLY | O_DIRECT);
++        if (fd < 0) {
++            throw std::runtime_error("expstore: cannot open " + f);
++        }
++        s->fds.push_back(fd);
 +    }
 +    s->bufs.assign(GGML_DEFAULT_N_THREADS * 8, nullptr);
 +    for (auto & L : s->layers) {
@@ -527,7 +576,7 @@ index 0000000..1045159
 +        const uint64_t end  = (off + pi.bytes + ALIGN - 1) & ~(ALIGN - 1);
 +        size_t done = 0;
 +        while (done < end - beg) {
-+            const ssize_t r = pread(s.fd, (char *) buf + done, end - beg - done, beg + done);
++            const ssize_t r = pread(s.fds[pi.file], (char *) buf + done, end - beg - done, beg + done);
 +            if (r <= 0) {
 +                GGML_ABORT("expstore: read failed for %s", pi.name.c_str());
 +            }
@@ -1186,6 +1235,80 @@ index 9fe9d77..b9f5130 100644
      struct ggml_tensor * ffn_up_exps_s     = nullptr;
  
      // ff MoE latent proj
+diff --git a/src/models/deepseek2.cpp b/src/models/deepseek2.cpp
+index 5fd24d1..837c399 100644
+--- a/src/models/deepseek2.cpp
++++ b/src/models/deepseek2.cpp
+@@ -1,4 +1,5 @@
+ #include "models.h"
++#include "../llama-expstore.h"
+ 
+ void llama_model_deepseek2::load_arch_hparams(llama_model_loader & ml) {
+     uint32_t n_vocab = 0;
+@@ -133,8 +134,23 @@ void llama_model_deepseek2::load_arch_tensors(llama_model_loader & ml) {
+             }
+ 
+             // MoE branch
+-            layer.ffn_down_exps = create_tensor(tn(LLM_TENSOR_FFN_DOWN_EXPS, "weight", i), {n_ff_exp,   n_embd, n_expert}, flags);
+-            create_tensor_gate_up_exps(layer, i, n_embd, n_ff_exp, n_expert, flags);
++            // HOTskip: hot/cold split skeleton (llm-lab/make_store2.py)? Kimi K2.x loads as deepseek2
++            const ggml_tensor * hmeta = ml.get_tensor_meta(tn(LLM_TENSOR_FFN_DOWN_HEXPS, "weight", i).str().c_str());
++            const ggml_tensor * cmeta = ml.get_tensor_meta(tn(LLM_TENSOR_FFN_DOWN_CEXPS, "weight", i).str().c_str());
++            if (hmeta && cmeta) {
++                const int64_t n_h = hmeta->ne[2], n_c = cmeta->ne[2];
++                layer.ffn_gate_hexps = create_tensor(tn(LLM_TENSOR_FFN_GATE_HEXPS, "weight", i), {n_embd,   n_ff_exp, n_h}, flags);
++                layer.ffn_up_hexps   = create_tensor(tn(LLM_TENSOR_FFN_UP_HEXPS,   "weight", i), {n_embd,   n_ff_exp, n_h}, flags);
++                layer.ffn_down_hexps = create_tensor(tn(LLM_TENSOR_FFN_DOWN_HEXPS, "weight", i), {n_ff_exp, n_embd,   n_h}, flags);
++                layer.ffn_gate_cexps = create_tensor(tn(LLM_TENSOR_FFN_GATE_CEXPS, "weight", i), {n_embd,   n_ff_exp, n_c}, flags);
++                layer.ffn_up_cexps   = create_tensor(tn(LLM_TENSOR_FFN_UP_CEXPS,   "weight", i), {n_embd,   n_ff_exp, n_c}, flags);
++                layer.ffn_down_cexps = create_tensor(tn(LLM_TENSOR_FFN_DOWN_CEXPS, "weight", i), {n_ff_exp, n_embd,   n_c}, flags);
++                layer.ffn_moe_hmap   = create_tensor(tn(LLM_TENSOR_FFN_MOE_HMAP,   "weight", i), {n_expert}, flags);
++                layer.ffn_moe_cmap   = create_tensor(tn(LLM_TENSOR_FFN_MOE_CMAP,   "weight", i), {n_expert}, flags);
++            } else {
++                layer.ffn_down_exps = create_tensor(tn(LLM_TENSOR_FFN_DOWN_EXPS, "weight", i), {n_ff_exp,   n_embd, n_expert}, flags);
++                create_tensor_gate_up_exps(layer, i, n_embd, n_ff_exp, n_expert, flags);
++            }
+ 
+             // Shared expert branch
+             layer.ffn_gate_shexp = create_tensor(tn(LLM_TENSOR_FFN_GATE_SHEXP, "weight", i), {n_embd, n_ff_exp * n_expert_shared}, flags);
+@@ -645,6 +661,29 @@ llama_model_deepseek2::graph::graph(const llama_model & model, const llm_graph_p
+                 NULL, LLM_FFN_SILU, LLM_FFN_PAR, il);
+             cb(cur, "ffn_out", il);
+         } else {
++            // HOTskip: guess the experts of layer il+ahead (its router + selection bias on this hidden state)
++            static const int pred_k = getenv("EXPSTORE_PREDICT") ? atoi(getenv("EXPSTORE_PREDICT")) : 0;
++            static const int ahead  = getenv("EXPSTORE_AHEAD")   ? atoi(getenv("EXPSTORE_AHEAD"))   : 1;
++            if (pred_k > 0 && il + ahead < n_layer && llama_expstore_enabled() && model.layers[il + ahead].ffn_moe_cmap) {
++                const auto & N = model.layers[il + ahead];
++                ggml_tensor * logits = build_lora_mm(N.ffn_gate_inp, cur);
++                if (N.ffn_exp_probs_b) {
++                    logits = ggml_add(ctx0, logits, N.ffn_exp_probs_b);
++                }
++                ggml_tensor * guess = ggml_cont(ctx0, ggml_top_k(ctx0, logits, pred_k));
++                ggml_tensor * slots[3] = { N.ffn_gate_cexps, N.ffn_up_cexps, N.ffn_down_cexps };
++                ggml_build_forward_expand(gf, llama_expstore_predict(ctx0, guess, slots, 3, il + ahead));
++            }
++
++            llm_moe_split split;
++            if (model.layers[il].ffn_moe_hmap) {
++                const auto & L = model.layers[il];
++                split = { L.ffn_gate_hexps, L.ffn_up_hexps, L.ffn_down_hexps,
++                          L.ffn_gate_cexps, L.ffn_up_cexps, L.ffn_down_cexps,
++                          L.ffn_moe_hmap,   L.ffn_moe_cmap };
++                moe_split = &split;
++            }
++
+             // MoE branch
+             ggml_tensor * moe_out = build_moe_ffn(cur,
+                 model.layers[il].ffn_gate_inp,
+@@ -659,6 +698,7 @@ llama_model_deepseek2::graph::graph(const llama_model & model, const llm_graph_p
+                 il,
+                 nullptr,
+                 model.layers[il].ffn_gate_up_exps);
++            moe_split = nullptr;
+             cb(moe_out, "ffn_moe_out", il);
+ 
+             // FFN shared expert
 diff --git a/src/models/deepseek4.cpp b/src/models/deepseek4.cpp
 index af04ddd..52b1869 100644
 --- a/src/models/deepseek4.cpp

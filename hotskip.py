@@ -66,18 +66,21 @@ def vram_free():
 
 def model_info(path):
     import gguf
-    r = gguf.GGUFReader(path)
+    from make_store2 import shards_of  # a split model (-00001-of-0000N) is counted over all its shards
+    readers = [gguf.GGUFReader(p) for p in shards_of(path)]
+    r = readers[0]
+    tensors = [x for rd in readers for x in rd.tensors]
     arch = bytes(r.fields["general.architecture"].parts[-1]).decode()
     f = lambda k: int(r.fields[f"{arch}.{k}"].parts[-1][0])  # noqa: E731
     n_expert, n_used = f("expert_count"), f("expert_used_count")
-    t = {x.name: x for x in r.tensors}
+    t = {x.name: x for x in tensors}
     layers = [il for il in range(f("block_count")) if f"blk.{il}.ffn_down_exps.weight" in t]
     per_layer = {il: sum(t[n].n_bytes for n in t if n.startswith(f"blk.{il}.ffn_") and "_exps." in n) // n_expert
                  for il in layers}
-    experts = sum(x.n_bytes for x in r.tensors if "_exps." in x.name)
+    experts = sum(x.n_bytes for x in tensors if "_exps." in x.name)
     return {"arch": arch, "n_expert": n_expert, "n_used": n_used, "moe_layers": len(layers),
             "expert_row_bytes": sum(per_layer.values()),  # one expert in every MoE layer
-            "experts_bytes": experts, "other_bytes": sum(x.n_bytes for x in r.tensors) - experts}
+            "experts_bytes": experts, "other_bytes": sum(x.n_bytes for x in tensors) - experts}
 
 
 def scope(mem_bytes):
@@ -122,8 +125,14 @@ def build(a):
         ram = mem_available() - 6 * GIB  # leave room for the desktop and the rest of the process
         slots = int(ram // info["expert_row_bytes"])
     min_lru = 4 * info["n_used"]  # -ub 4: one batch may need this many distinct experts per layer
-    slots = max(min_lru + 8, min(slots, info["n_expert"]))
-    pinned = min(slots // 4, slots - min_lru)
+    if a.slots is None:
+        slots = max(min_lru + 8, min(slots, info["n_expert"]))
+    else:
+        # very big models (Kimi: 688 MB per slot row) cannot afford min_lru + 8 rows: decode needs n_used per token
+        # and bigger batches are split into groups that fit (grouped prefill), so 2 x n_used is the hard floor
+        slots = max(2 * info["n_used"], min(slots, info["n_expert"]))
+        min_lru = min(min_lru, slots - info["n_used"])
+    pinned = max(0, min(slots // 4, slots - min_lru))
     print(f"tiers: VRAM {hot:.2f} GiB of hot experts, RAM {slots} slots/layer "
           f"({slots * info['expert_row_bytes'] / GIB:.1f} GiB, {pinned} pinned), rest on SSD")
 
@@ -158,8 +167,15 @@ def server_cmd(name, port, ctx, io_threads, think, ngl=None):
     cap = max(need, mem_available() - 2 * GIB)
     # big micro-batches: the store serves cold experts in groups that fit RAM (each read once per batch)
     cmd = scope(cap) + [f"{BIN}/llama-server", "-m", f"{d}/skeleton.gguf", "--host", "127.0.0.1",
-                        "--port", str(port), "-c", str(ctx or cfg.get("ctx", 16384)), "-ngl", str(ngl if ngl is not None else cfg.get("ngl", 99)), "-ot", "cexps=CPU,moe_.map=CPU", "-t", "8", "--load-mode", "none",
+                        "--port", str(port), "-c", str(ctx or cfg.get("ctx", 16384)), "-ngl", str(ngl if ngl is not None else cfg.get("ngl", 99)),
+                        # per-model placement: e.g. Kimi keeps its hot experts on the GPU with all layers on the CPU
+                        "-ot", cfg.get("ot", "cexps=CPU,moe_.map=CPU"), "-t", "8", "--load-mode", "none",
                         "-ub", str(cfg.get("ub", 512)), "-b", "2048", "--jinja", "--reasoning", "on" if think else "off"]
+    cmd += cfg.get("extra_args", [])  # anything else per model, e.g. ["--spec-type", "ngram-mod"]
+    if cfg.get("n_used_override"):  # fewer experts per token than trained with: less to read, a bit less quality
+        cmd += ["--override-kv", f"{cfg['arch']}.expert_used_count=int:{cfg['n_used_override']}"]
+    if not think and cfg.get("no_think_kwargs"):  # templates with their own switch, e.g. Kimi: {"thinking": false}
+        cmd += ["--chat-template-kwargs", json.dumps(cfg["no_think_kwargs"])]
     return cmd, env
 
 
